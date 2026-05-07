@@ -1,0 +1,357 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+// --- SVG Icons ---
+const Icons = {
+  BookOpen: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  ),
+  CheckCircle: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  ),
+  Info: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+  ),
+  ChevronDown: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+  ),
+  ChevronRight: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  ),
+  Menu: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  )
+};
+
+// --- Exam Data Structure ---
+const examData = [
+  {
+    id: 1,
+    title: "Part 1: Multiple Choice Cloze",
+    instructions: "For questions 1-8, read the text below and decide which answer (A, B, C or D) best fits each gap.",
+    text: `New words for a dictionary
+
+The editors of a new online dictionary are inviting the public to submit words that they would like to see in the dictionary. People are already sending in words, some of which they have (1) ___ themselves - these will almost certainly not (2) ___ in the dictionary!
+
+When a new word is submitted, editors check newspapers, radio, television and social networks to see how (3) ___ the word is used. They also (4) ___ whether the word is likely to remain in use for more than one or two years. The evidence they collect will help them decide whether or not to put it in the dictionary.
+
+Editors will (5) ___ feedback on any words submitted by the public. Even words not accepted will (6) ___ to be monitored over the following year. Editors need to be (7) ___ of new words which emerge from areas such as popular culture and technology, so that their dictionary is a genuine (8) ___ of the current language.`,
+    questions: [
+      { qNum: 1, text: "(1)", options: ["A. set out", "B. made up", "C. brought out", "D. come up"], answer: "B. made up", explanation: "The phrasal verb 'make up' means to invent something, like a word or a story. The context indicates people are inventing their own words.", highlightRef: "some of which they have (1) ___ themselves" },
+      { qNum: 2, text: "(2)", options: ["A. include", "B. show", "C. consist", "D. appear"], answer: "D. appear", explanation: "Words 'appear' in a dictionary. We would use 'be included' (passive) but 'include' actively doesn't fit the grammar here.", highlightRef: "these will almost certainly not (2) ___ in the dictionary" },
+      { qNum: 3, text: "(3)", options: ["A. totally", "B. widely", "C. fully", "D. vastly"], answer: "B. widely", explanation: "'Widely used' is a strong collocation meaning used by many people in many places.", highlightRef: "see how (3) ___ the word is used" },
+      { qNum: 4, text: "(4)", options: ["A. consider", "B. regard", "C. prove", "D. rate"], answer: "A. consider", explanation: "'Consider' means to think about carefully. They are thinking about the likelihood of the word remaining in use.", highlightRef: "They also (4) ___ whether the word is likely to remain in use" },
+      { qNum: 5, text: "(5)", options: ["A. state", "B. tell", "C. provide", "D. inform"], answer: "C. provide", explanation: "'Provide feedback' is the standard collocation. You don't 'tell' or 'state' feedback.", highlightRef: "Editors will (5) ___ feedback on any words submitted" },
+      { qNum: 6, text: "(6)", options: ["A. keep", "B. rest", "C. last", "D. continue"], answer: "D. continue", explanation: "'Continue to be monitored' is the correct verb pattern. 'Keep' would require an -ing form ('keep being monitored').", highlightRef: "words not accepted will (6) ___ to be monitored" },
+      { qNum: 7, text: "(7)", options: ["A. familiar", "B. aware", "C. alert", "D. experience"], answer: "B. aware", explanation: "'Be aware of' means to know about something. 'Familiar with' takes a different preposition.", highlightRef: "Editors need to be (7) ___ of new words which emerge" },
+      { qNum: 8, text: "(8)", options: ["A. mark", "B. copy", "C. reflection", "D. imitation"], answer: "C. reflection", explanation: "A dictionary serves as an accurate 'reflection' (representation) of the language currently in use.", highlightRef: "so that their dictionary is a genuine (8) ___ of the current language" }
+    ]
+  },
+  {
+    id: 2,
+    title: "Part 2: Open Cloze",
+    instructions: "For questions 9-16, read the text below and think of the word which best fits each gap. Use only one word in each gap.",
+    text: `Animal communication
+
+It is sometimes said that animals use language. Certainly some animal species have developed amazingly sophisticated ways of communicating with (9) ___ another.
+
+But there are huge differences between the ways animals communicate and the ways human beings do. When animals make a sound, such (10) ___ a bark or a call, it is in reaction to (11) ___ is happening around them. An alarm call means they are frightened. A hunger call means they want food. Animals, though, cannot make a call meaning 'I was scared yesterday' or 'I'll be hungry tomorrow'. Only human beings are capable (12) ___ doing this.
+
+Zoologists have had some success in teaching human language to animals. (13) ___ famous experiments, chimpanzees have (14) ___ taught to use their hands to give information on a range of things. Some animals have even managed to put signs together in (15) ___ to make simple sentences. However, getting them to do this takes a huge (16) ___ of training.`,
+    questions: [
+      { qNum: 9, answer: "one", explanation: "The phrase 'one another' is used to show that each member of a group does something to or for the other members.", highlightRef: "ways of communicating with (9) ___ another" },
+      { qNum: 10, answer: "as", explanation: "The phrase 'such as' is used to introduce examples.", highlightRef: "When animals make a sound, such (10) ___ a bark or a call" },
+      { qNum: 11, answer: "what", explanation: "'What' acts as a relative pronoun here meaning 'the thing(s) that'.", highlightRef: "it is in reaction to (11) ___ is happening around them" },
+      { qNum: 12, answer: "of", explanation: "The adjective 'capable' is always followed by the preposition 'of' + -ing.", highlightRef: "Only human beings are capable (12) ___ doing this." },
+      { qNum: 13, answer: "In", explanation: "We use the preposition 'In' to refer to things happening inside tests or studies ('In experiments').", highlightRef: "(13) ___ famous experiments, chimpanzees have" },
+      { qNum: 14, answer: "been", explanation: "This is the present perfect passive voice: 'have been taught'.", highlightRef: "chimpanzees have (14) ___ taught to use their hands" },
+      { qNum: 15, answer: "order", explanation: "The phrase 'in order to' means 'with the purpose of'.", highlightRef: "put signs together in (15) ___ to make simple sentences" },
+      { qNum: 16, answer: "amount", explanation: "The phrase 'a huge amount of' is used with uncountable nouns like 'training'.", highlightRef: "takes a huge (16) ___ of training." }
+    ]
+  },
+  {
+    id: 3,
+    title: "Part 3: Word Formation",
+    instructions: "For questions 17-24, read the text below. Use the word given in capitals at the end of some of the lines to form a word that fits in the gap.",
+    text: `Cycling
+
+I have been a keen cyclist for about nine years. When I began cycling, I found the flat roads easy but the hills almost (17) ___. [POSSIBLE] Surprisingly, now it's the opposite. A long flat ride can be both dull and (18) ___ [EXHAUST] as you never experience that fantastic feeling of freedom when speeding downhill. Years ago, going uphill left me (19) ___. [BREATH] Now I have learned to take hills slowly and steadily.
+
+When I set off, I'm full of energy and the first hundred metres are (20) ___, [MARVEL] the next couple of kilometres a bit tiring, but on the whole the experience is very (21) ___. [ENJOY]
+
+Cycling is (22) ___ [LIKE] any other forms of exercise I have tried; it is never a chore but always a (23) ___. [PLEASE] The physical benefits are obvious but the mental benefits are (24) ___ [EQUAL] important; when you are travelling calmly at a sensible speed, you breathe fresh air, have time to think and can relax.`,
+    questions: [
+      { qNum: 17, answer: "IMPOSSIBLE", explanation: "The negative prefix 'im-' is added to 'possible' to contrast with the 'easy' flat roads.", highlightRef: "I found the flat roads easy but the hills almost (17) ___" },
+      { qNum: 18, answer: "EXHAUSTING", explanation: "The -ing adjective describes the effect the ride has on the rider (making them tired).", highlightRef: "A long flat ride can be both dull and (18) ___" },
+      { qNum: 19, answer: "BREATHLESS", explanation: "The suffix '-less' means without. Going uphill left the rider without breath.", highlightRef: "Years ago, going uphill left me (19) ___" },
+      { qNum: 20, answer: "MARVELLOUS", explanation: "The adjective form of 'marvel' is needed to describe the first hundred metres.", highlightRef: "the first hundred metres are (20) ___" },
+      { qNum: 21, answer: "ENJOYABLE", explanation: "The suffix '-able' is added to 'enjoy' to describe the experience as bringing joy.", highlightRef: "on the whole the experience is very (21) ___" },
+      { qNum: 22, answer: "UNLIKE", explanation: "The negative prefix 'un-' is used with 'like' as a preposition to mean 'different from'.", highlightRef: "Cycling is (22) ___ any other forms of exercise I have tried" },
+      { qNum: 23, answer: "PLEASURE", explanation: "A noun is required after the article 'a'. The noun form of 'please' is 'pleasure'.", highlightRef: "it is never a chore but always a (23) ___" },
+      { qNum: 24, answer: "EQUALLY", explanation: "An adverb is needed to modify the adjective 'important'.", highlightRef: "but the mental benefits are (24) ___ important" }
+    ]
+  },
+  {
+    id: 5,
+    title: "Part 5: Reading Comprehension",
+    instructions: "You are going to read part of an autobiography in which a gardener talks about his childhood. For questions 31-36, choose the answer (A, B, C or D) which you think fits best.",
+    text: `Green fingers
+
+It never occurred to me when I was little that gardens were anything less than glamorous places. Grandad's garden was on the bank of a river and sloped gently down towards the water. You couldn't reach the river but you could hear the sound of the water and the birds that sang in the trees above. I imagined that all gardens were like this a place of escape, peace and solitude. Grandad's plot was nothing out of the ordinary when it came to features. He had nothing as grand as a greenhouse, unlike some of his neighbours...
+
+At home, his son, my father, could be quiet and withdrawn. I wouldn't want to make him sound humourless. He wasn't. Silly things would amuse him. He had phrases that he liked to use, 'It's immaterial to me' being one of them. 'I don't mind' would have done just as well but he liked the word 'immaterial'. I realise that, deep down, he was probably disappointed that he hadn't made more of his life. He left school without qualifications and became apprenticed to a plumber. Plumbing was not something he was passionate about... Where he came into his own was around the house. He had an 'eye for the job'. Be it bookshelves or a cupboard - what he could achieve was astonishing.
+
+My parents moved house only once in their entire married life. But my mother made up for this lack of daring when it came to furniture. You would just get used to the shape of one chair when another appeared, but the most dramatic change of all was the arrival of a piano. I always wanted to like it but it did its best to intimidate me. The only thing I did like about it were the two brass candlesticks that jutted out... There was never any mention of my being allowed to play it. Instead lessons were booked for my sister.
+
+Of the three options, moors, woods or river - the river was the one that usually got my vote. On a stretch of the river I was allowed to disappear with my imagination into another world. With a fishing net over my shoulder I could set off in sandals... I'd walk along the river bank looking for a suitable spot where I could take off the painful sandals and leave them with my picnic while I ventured out, tentatively, peering through the water for any fish that I could scoop up...
+
+I wanted to leave school as soon as possible but that seemed an unlikely prospect until one day my father announced, 'They've got a vacancy for an apprentice gardener in the Parks Department. I thought you might be interested.' In one brief moment Dad had gone against his better judgement. He might still have preferred it if I became a carpenter. But I like to feel that somewhere inside him was a feeling that things might just turn out for the best. If I stuck at it. Maybe I'm deceiving myself, but I prefer to believe that in his heart, although he hated gardening himself, he'd watched me doing it for long enough and noticed my unfailing passion for all things that grew and flowered and fruited.`,
+    questions: [
+      { qNum: 31, text: "When the writer describes his grandad's garden, he is", options: ["A. proud that his granddad was such a good gardener.", "B. embarrassed that the garden was not as good as others nearby.", "C. indignant that items in the garden were often damaged.", "D. positive about the time he spent in the garden."], answer: "D", explanation: "He describes it in a highly positive way as 'a place of escape, peace and solitude', indicating he cherished the time there.", highlightRef: "I imagined that all gardens were like this a place of escape, peace and solitude." },
+      { qNum: 32, text: "What is the writer's attitude to his father in the second paragraph?", options: ["A. regretful that his father had not achieved more", "B. irritated that his father used words he didn't understand", "C. sympathetic to the reasons why his father behaved as he did", "D. grateful that his father had not taken the family to Canada"], answer: "C", explanation: "The writer expresses understanding and sympathy: 'I realise that, deep down, he was probably disappointed that he hadn't made more of his life.'", highlightRef: "I realise that, deep down, he was probably disappointed that he hadn't made more of his life." },
+      { qNum: 33, text: "What does the writer mean by the phrase 'came into his own'?", options: ["A. was able to do something by himself", "B. was able to show how talented he was", "C. was able to continue his day job", "D. was able to forget his failures"], answer: "B", explanation: "'Come into one's own' means to show one's true abilities or talents. He was extremely talented at woodwork around the house ('what he could achieve was astonishing').", highlightRef: "what he could achieve was astonishing." },
+      { qNum: 34, text: "What was the writer's first reaction to the piano?", options: ["A. surprise when it suddenly appeared", "B. pleasure at seeing it in the living room", "C. anger that only his sister would have piano lessons", "D. pride that his mother had listened to his advice"], answer: "A", explanation: "He notes that furniture just 'appeared', and the piano was 'the most dramatic change of all', implying a sudden, surprising arrival.", highlightRef: "but the most dramatic change of all was the arrival of a piano." },
+      { qNum: 35, text: "The writer's description of his fishing trips illustrate", options: ["A. how much free time he was given.", "B. how beautiful the river was.", "C. how good a fisherman he was.", "D. how carefree his childhood was."], answer: "D", explanation: "He describes being allowed to 'disappear with my imagination into another world', portraying a highly carefree and exploratory childhood.", highlightRef: "I was allowed to disappear with my imagination into another world." },
+      { qNum: 36, text: "What is the main idea of the last paragraph?", options: ["A. His father did not want his son to be a gardener.", "B. His father was tired of disagreeing with his son.", "C. His father had been impressed by his son's love of gardening.", "D. His father had been trying to find a job his son would enjoy."], answer: "C", explanation: "The writer believes his father offered him the job because he had 'noticed my unfailing passion for all things that grew', despite the father's own dislike for gardening.", highlightRef: "he'd watched me doing it for long enough and noticed my unfailing passion for all things that grew" }
+    ]
+  },
+  {
+    id: 7,
+    title: "Part 7: Multiple Matching",
+    instructions: "You are going to read four reviews of a science documentary series. For questions 43-52, choose from the reviews (A-D).",
+    text: `A. Science for All
+Fortunately for me and non-scientists everywhere, the makers of Science for All are there to plug the gaps in our knowledge. The series is rather like a knowledgeable parent who doesn't mind being pestered by wide-eyed and curious children: it takes the time to explain all those fascinating mysteries of nature in an entertaining and understandable way. The last series opened my eyes to all manner of interesting facts... And the new series shows no lack of inspiration for subjects to tackle: everything from the existence of life on other planets to the odd properties of human memory are rightly considered suitable subjects.
+
+B. Out in Space
+Although I wasn't expecting much from this series, I'm pleased that the producers of Out in Space persisted with their unpromising subject. In the course of the first programme we learn about hurricanes, deserts, and even how the Moon was made... That's not to say the programme explored them in any great detail, preferring to skip breathlessly from one to the next. The essential logic of the series seemed to be that if you take any natural phenomenon and ask 'why?' enough times, the answers will eventually be that it's something to do with space. The two presenters attempted to get it all to fit together, by taking part in exciting activities.
+
+C. Stars and Planets
+Like its predecessor, this is big on amazing photography and fabulous graphics... This time the scope is even wider, astronomically speaking. What we are being introduced to here are ambitious ideas about time and space, and the presenter succeeds rather better than you might expect. It helps that he doesn't go too deep, as once you start thinking about it this is tricky stuff to get your head around. The point of such programmes is less to explain every detail than to arouse a generalised sense of amazement that might lead to further thinking, and Stars and Planets is certainly good at that.
+
+D. Robot Technology
+This ground-breaking science documentary series follows a group of experts as they attempt to build a complete artificial human from robotic body parts... It is the realisation of a long-held dream to create a human from manufactured parts... The series explores to what extent modern technology is capable of replacing body parts - or even improving their abilities. The presenter, very appropriately, has an artificial hand himself. This ambitious series gives us a guided tour of the wonders of modern technology. Though it can be a slightly upsetting journey at times, it engages the audience in a revolution that is changing the face of medicine.`,
+    questions: [
+      { qNum: 43, text: "an effort was made to connect a number of unrelated issues?", answer: "B", explanation: "Review B mentions that the presenters 'attempted to get it all to fit together', referring to the 'bewildering mix of phenomena'.", highlightRef: "The two presenters attempted to get it all to fit together" },
+      { qNum: 44, text: "the topics covered are well chosen?", answer: "A", explanation: "Review A says the subjects are 'rightly considered suitable subjects'.", highlightRef: "are rightly considered suitable subjects." },
+      { qNum: 45, text: "viewers are shown how science can occasionally do better than nature?", answer: "D", explanation: "Review D mentions modern technology replacing body parts 'or even improving their abilities'.", highlightRef: "replacing body parts - or even improving their abilities." },
+      { qNum: 46, text: "the series deals with something people have hoped to achieve for a while?", answer: "D", explanation: "Review D says 'It is the realisation of a long-held dream'.", highlightRef: "It is the realisation of a long-held dream" },
+      { qNum: 47, text: "the series unfortunately didn't spend a lot of time explaining the topics covered?", answer: "B", explanation: "Review B states the program didn't explore things in great detail, 'preferring to skip breathlessly from one to the next'.", highlightRef: "explored them in any great detail, preferring to skip breathlessly from one to the next." },
+      { qNum: 48, text: "viewers are clearly informed?", answer: "A", explanation: "Review A says it explains mysteries 'in an entertaining and understandable way'.", highlightRef: "explain all those fascinating mysteries of nature in an entertaining and understandable way." },
+      { qNum: 49, text: "it's good that viewers are not required to consider all aspects of the subject carefully?", answer: "C", explanation: "Review C notes 'It helps that he doesn't go too deep' because it is 'tricky stuff to get your head around'.", highlightRef: "It helps that he doesn't go too deep, as once you start thinking about it this is tricky stuff" },
+      { qNum: 50, text: "the series was worth making despite the topic not appearing very interesting at first?", answer: "B", explanation: "Review B is 'pleased that the producers... persisted with their unpromising subject'.", highlightRef: "pleased that the producers of Out in Space persisted with their unpromising subject." },
+      { qNum: 51, text: "viewers may not always find the series comfortable to watch?", answer: "D", explanation: "Review D warns that it can be 'a slightly upsetting journey at times'.", highlightRef: "Though it can be a slightly upsetting journey at times" },
+      { qNum: 52, text: "the series achieves its aims by astonishing its viewers?", answer: "C", explanation: "Review C says the point is to 'arouse a generalised sense of amazement'.", highlightRef: "arouse a generalised sense of amazement" }
+    ]
+  }
+];
+
+
+// --- Helper Components ---
+
+// Text Highlighter
+const HighlightedText = ({ text, highlightRef }) => {
+  if (!highlightRef) {
+    return <span className="whitespace-pre-wrap">{text}</span>;
+  }
+
+  const parts = text.split(highlightRef);
+  
+  // If the highlight isn't perfectly found, just return normal text
+  // (In a real app, you might use a more robust regex or fuzzy search)
+  if (parts.length === 1) {
+    return <span className="whitespace-pre-wrap">{text}</span>;
+  }
+
+  return (
+    <span className="whitespace-pre-wrap text-slate-800 leading-relaxed">
+      {parts.map((part, index) => (
+        <React.Fragment key={index}>
+          {part}
+          {index < parts.length - 1 && (
+            <mark className="bg-yellow-200 text-slate-900 rounded px-1 shadow-sm font-medium transition-all duration-300">
+              {highlightRef}
+            </mark>
+          )}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+};
+
+
+// --- Main Application ---
+export default function App() {
+  const [activePartId, setActivePartId] = useState(examData[0].id);
+  const [activeQuestionId, setActiveQuestionId] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const activePart = examData.find(p => p.id === activePartId);
+  const activeQuestion = activePart?.questions.find(q => q.qNum === activeQuestionId);
+
+  // Reset selected question when changing parts
+  useEffect(() => {
+    setActiveQuestionId(null);
+  }, [activePartId]);
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+      
+      {/* Top Navigation */}
+      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-600 text-white p-2 rounded-lg">
+            <Icons.BookOpen />
+          </div>
+          <div>
+            <h1 className="font-bold text-lg leading-tight text-slate-900">B2 First (FCE) Examiner</h1>
+            <p className="text-xs text-slate-500 font-medium">Interactive Answer Key • Test 3</p>
+          </div>
+        </div>
+        <button 
+          className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          <Icons.Menu />
+        </button>
+      </header>
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden relative">
+        
+        {/* Sidebar Navigation */}
+        <aside className={`
+          absolute md:relative z-10 bg-slate-50 border-r border-slate-200 w-64 h-full 
+          transform transition-transform duration-300 ease-in-out shrink-0
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          <div className="p-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Exam Sections</h2>
+            <nav className="space-y-1">
+              {examData.map((part) => (
+                <button
+                  key={part.id}
+                  onClick={() => {
+                    setActivePartId(part.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                    activePartId === part.id 
+                      ? 'bg-blue-100 text-blue-700' 
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {part.title}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        {/* Overlay for mobile sidebar */}
+        {mobileMenuOpen && (
+          <div 
+            className="absolute inset-0 bg-slate-900/20 z-0 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Split Screen Content */}
+        <div className="flex flex-1 flex-col md:flex-row overflow-hidden w-full">
+          
+          {/* Left Pane: Reading Text */}
+          <div className="flex-1 md:w-1/2 border-b md:border-b-0 md:border-r border-slate-200 bg-white overflow-y-auto p-5 md:p-8">
+            <div className="max-w-2xl mx-auto">
+              <div className="mb-6 pb-4 border-b border-slate-100">
+                <h2 className="text-xl font-bold text-slate-800 mb-2">{activePart.title}</h2>
+                <p className="text-sm text-slate-500 italic">{activePart.instructions}</p>
+              </div>
+              
+              <div className="prose prose-slate max-w-none text-[15px]">
+                {activePart.text.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className="mb-4 text-justify">
+                    <HighlightedText 
+                      text={paragraph} 
+                      highlightRef={activeQuestion?.highlightRef} 
+                    />
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Pane: Questions & Explanations */}
+          <div className="flex-1 md:w-1/2 bg-slate-50 overflow-y-auto p-5 md:p-8">
+            <div className="max-w-xl mx-auto">
+              <div className="mb-6 flex items-center gap-2">
+                <Icons.CheckCircle />
+                <h2 className="text-lg font-bold text-slate-800">Questions & Explanations</h2>
+              </div>
+              
+              <p className="text-sm text-slate-500 mb-4 bg-white p-3 border border-slate-200 rounded-lg shadow-sm">
+                Click on a question to view the correct answer, an explanation, and to highlight the relevant section in the text.
+              </p>
+
+              <div className="space-y-3 pb-8">
+                {activePart.questions.map((q) => (
+                  <div 
+                    key={q.qNum} 
+                    className={`bg-white border rounded-xl overflow-hidden transition-all duration-200 ${
+                      activeQuestionId === q.qNum 
+                        ? 'border-blue-400 shadow-md ring-1 ring-blue-400' 
+                        : 'border-slate-200 hover:border-blue-300 hover:shadow-sm cursor-pointer'
+                    }`}
+                  >
+                    {/* Question Header (Always Visible) */}
+                    <div 
+                      className="p-4 flex items-start gap-4 cursor-pointer"
+                      onClick={() => setActiveQuestionId(activeQuestionId === q.qNum ? null : q.qNum)}
+                    >
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                        activeQuestionId === q.qNum ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {q.qNum}
+                      </div>
+                      <div className="flex-1">
+                        {q.text && <p className="font-medium text-slate-800 text-sm md:text-base mb-1">{q.text}</p>}
+                        {q.options && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">
+                            {q.options.map((opt, i) => (
+                              <span key={i} className="text-xs text-slate-500">{opt}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className={`mt-1 transition-transform ${activeQuestionId === q.qNum ? 'rotate-180' : ''}`}>
+                        <Icons.ChevronDown />
+                      </div>
+                    </div>
+
+                    {/* Answer & Explanation (Expanded State) */}
+                    {activeQuestionId === q.qNum && (
+                      <div className="p-4 bg-blue-50/50 border-t border-blue-100">
+                        <div className="mb-3">
+                          <span className="text-xs font-bold uppercase tracking-wider text-green-600 mb-1 block">Correct Answer</span>
+                          <span className="text-lg font-semibold text-slate-900">{q.answer}</span>
+                        </div>
+                        
+                        <div className="flex items-start gap-2 bg-white p-3 rounded-lg border border-blue-100">
+                          <div className="text-blue-500 shrink-0 mt-0.5">
+                            <Icons.Info />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1 block">Explanation</span>
+                            <p className="text-sm text-slate-700 leading-relaxed">{q.explanation}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
